@@ -1,0 +1,1585 @@
+/**
+ * 鲸鱼娘 · 未至之境 (Whale Girl · The Unreached) — L3 atmosphere layer.
+ *
+ * Pure CSS, no hooks. The loader force-scopes every selector under
+ * html[data-dsh-skin="whale-fantasy"], so rules here are written unscoped on purpose.
+ *
+ * Every hook below is one the shell actually emits, verified against the
+ * installed shell and the loader's own surface registry — not guessed:
+ *   · canvas      body::after              the theme's ground
+ *   · sidebar     [data-slot="sidebar"], [data-dsh-surface="sidebar"],
+ *                 [data-pane="sidebar"], aside
+ *   · details     [data-slot="details"], [data-dsh-surface="details"]
+ *   · conversation [data-conversation-scroll], [data-chat-flow]
+ *   · rows        [data-chat-flow-kind="user" | "assistant-step" | ...]
+ *   · composer    [data-composer-card], [data-input-scroll],
+ *                 [data-composer-placeholder]
+ *   · hero        [data-phase="hero"]
+ *
+ * Deliberately NOT touched: html[data-we-wallpaper] and
+ * html[data-dsh-backdrop-active]. The loader owns those — it neutralises scene
+ * backgrounds behind a wallpaper and re-blurs the composer card itself — so the
+ * canvas rule below steps aside instead of fighting it.
+ */
+
+/* ── custom properties, per mode ─────────────────────────────────────────── */
+
+body {
+  --sk-ground: #05070D;
+  --sk-pane: radial-gradient(120% 80% at 82% 12%, #39ffd112 0%, transparent 62%), radial-gradient(95% 70% at 8% 92%, #3a7bff14 0%, transparent 64%);;
+  --sk-wall: #142847;
+  --sk-wall-edge: #1e3a6b52;
+  --sk-card-top: #0a1020b8;
+  --sk-composer-ring: 0 0 0 3px #3a7bff24;
+  --sk-bubble: #0a1325;
+  --sk-bubble-edge: #3a7bff38;
+  --sk-approval-edge: #ff6e8a73;
+}
+
+body {
+  --sk-ground: #05070D;
+  --sk-pane: radial-gradient(120% 80% at 82% 12%, #39ffd112 0%, transparent 62%), radial-gradient(95% 70% at 8% 92%, #3a7bff14 0%, transparent 64%);;
+  --sk-wall: #142847;
+  --sk-wall-edge: #1e3a6b5c;
+  --sk-card-top: #1e3a6b4d;
+  --sk-composer-ring: 0 0 0 3px #3a7bff33;
+  --sk-bubble: #0a1325;
+  --sk-bubble-edge: #3a7bff47;
+  --sk-approval-edge: #ff6e8a80;
+}
+
+/* ── canvas: the theme's ground ──────────────────────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--sk-ground);
+  background-image: var(--sk-pane);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/* When the user runs a wallpaper, the ground layer must disappear entirely,
+   or it paints over the wallpaper. The loader sets these flags itself.
+   Must be written body[...]::after, NOT html[...] body::after: the loader force-scopes
+   every selector as a descendant of html[data-dsh-skin], so the html form becomes
+   html[data-dsh-skin] html[...] body::after and can never match (html is not a
+   descendant of itself). The rule was dead and the canvas painted over the user's
+   wallpaper. The crystal engine was fixed first (see the note further down); the
+   material and anime engines still carried the dead form, which is also why
+   verify() rejected all eleven of them and no theme could be rebuilt. */
+body[data-we-wallpaper]::after,
+body[data-dsh-backdrop-active]::after {
+  background-color: transparent;
+  background-image: none;
+}
+
+/* ── sidebar: the theme's material as a wall, not a fill ─────────────────── */
+
+/* [data-slot="sidebar"] is the renderer's slot anchor and carries
+   display:contents, so it has no box of its own — the painted element is its
+   child (the sidebar's .root column, a flex container). Style the narrow slot
+   variant for plugin-provided sidebars too. */
+[data-slot='sidebar'] > *,
+[data-dsh-surface='sidebar'],
+[data-pane='sidebar'] {
+  background-color: var(--sk-wall) !important;
+  background-image: linear-gradient(180deg, #05070d85 0%, #05070d42 38%, #05070d0d 74%, transparent 100%);
+  box-shadow: inset -1px 0 0 var(--sk-wall-edge);
+}
+
+body [data-slot='sidebar'] > *,
+body [data-dsh-surface='sidebar'],
+body [data-pane='sidebar'] {
+  background-image: linear-gradient(180deg, #05070d85 0%, #05070d42 38%, #05070d0d 74%, transparent 100%);
+}
+
+/* the sidebar's own workspace list keeps the wall colour, not a raised card */
+[data-slot='sidebar.workspaces'] {
+  background-color: transparent !important;
+}
+
+/* ── details pane ────────────────────────────────────────────────────────── */
+
+[data-slot='details'],
+[data-slot='details'] > *,
+[data-dsh-surface='details'],
+[data-pane='details'] {
+  background-color: #05070ddb !important;
+}
+
+body [data-slot='details'],
+body [data-slot='details'] > *,
+body [data-dsh-surface='details'],
+body [data-pane='details'] {
+  background-color: #05070ddb !important;
+}
+
+/* ── hero: the empty-session screen ──────────────────────────────────────── */
+
+[data-phase='hero'] {
+  position: relative;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+body [data-phase='hero'] {
+  background-image: none;
+}
+
+/* ── composer: the theme's object ────────────────────────────────────────── */
+
+[data-composer-card] {
+  border-radius: 14px;
+  box-shadow: var(--sk-composer-ring), inset 0 1px 0 var(--sk-card-top);
+}
+
+body [data-composer-card] {
+  box-shadow: var(--sk-composer-ring), inset 0 1px 0 var(--sk-card-top);
+}
+
+/* the editable surface itself stays transparent so the card reads as one piece */
+[data-input-scroll] {
+  background-color: transparent;
+}
+
+[data-composer-placeholder] {
+  color: #8FA8CC;
+}
+
+body [data-composer-placeholder] {
+  color: #8FA8CC;
+}
+
+/* ── conversation rows: the material edge ────────────────────────────────── */
+
+/* the user's own turn gets the metal; the assistant stays quiet so the reading
+   column does not turn into a stripe of colour */
+[data-chat-flow-kind='user'] {
+  box-shadow: inset 3px 0 0 var(--sk-bubble-edge);
+}
+
+[data-chat-flow-kind='assistant-step'] {
+  background-color: transparent;
+}
+
+/* tool / context rows are furniture: give them the paper's edge, not the ink's */
+[data-chat-flow-kind='tool-call'],
+[data-chat-flow-kind='context'] {
+  border-radius: 10px;
+  background-color: #14284780;
+}
+
+body [data-chat-flow-kind='tool-call'],
+body [data-chat-flow-kind='context'] {
+  background-color: #14284780;
+}
+
+/* ── selection carries the metal ─────────────────────────────────────────── */
+
+::selection {
+  background-color: #3a7bff40;
+}
+
+body ::selection {
+  background-color: #3a7bff52;
+}
+
+/* ── approvals: the one place the warning ramp is allowed to shout ───────── */
+
+[data-approval-key],
+[data-question-key],
+[data-plan-review-key] {
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--sk-approval-edge), var(--dsw-shadow-lv2);
+}
+
+/* ── links keep the theme's metal rather than the shell's blue ───────────── */
+
+a {
+  color: #3A7BFF;
+}
+
+body a {
+  color: #3A7BFF;
+}
+
+/* ── scrollbars ──────────────────────────────────────────────────────────── */
+
+* {
+  scrollbar-color: #8fa8cc59 transparent;
+}
+
+body * {
+  scrollbar-color: #8fa8cc66 transparent;
+}
+
+/* ── 暗色专用：钉死原生配色方案（材质引擎本来没有这条，anime 引擎有）────────
+   必须写 :root 而不是 html：作用域转换把每条选择器当成 skin root 的后代加前缀，
+   html { … } 会变成 html[data-dsh-skin] html { … }，永远匹配不上；
+   :root 被特判成 html[data-dsh-skin="<id>"] 本身，正好落在 html 元素上 ——
+   这正是 color-scheme 需要的位置（它必须作用在根元素上才管得住原生控件）。 */
+
+:root {
+  color-scheme: dark !important;
+}
+
+
+/* ── per-theme extra chrome ────────────────────────────────────────────────
+   A theme may append its own rules here — the frame, the workspace plaque, the
+   new-session plate. Kept as a *function* so it derives colours from the same
+   palette through the same alpha()/mix() helpers instead of hard-coding hexes.
+   verify() scans the result for the fragility patterns (hashed class names,
+   :global, nested :has, backticks, unresolved interpolation). */
+/* ══ 鲸鱼娘 · 未至之境 · 机壳 ═════════════════════════════════════════ */
+
+/* ── 0 · 调色板落到自定义属性 ───────────────────────────────────────────── */
+body {
+  --ff-ink: #e8f1fff2;
+  --ff-ink-soft: #e8f1ff8f;
+  --ff-ink-faint: #e8f1ff4d;
+  --ff-edge: #1e3a6beb;
+  --ff-edge-soft: #1e3a6b8c;
+  --ff-edge-faint: #1e3a6b52;
+  --ff-brand: #3A7BFF;
+  --ff-brand-soft: #3a7bff4d;
+  --ff-brand-lift: #679aff;
+  --ff-cyan: #39FFD1;
+  --ff-cyan-soft: #39ffd157;
+  --ff-cyan-faint: #39ffd121;
+  --ff-glass: #0a10206b;
+  --ff-glass-card: #0a102094;
+  --ff-glass-sheet: #0a102066;
+  /* 定序到 Cascadia 优先：实测 ui-monospace 在这台机器上**不被识别**（真壳之所以仍是等宽，
+     是因为它被跳过、落到了第二项 Cascadia Mono：i/W 等宽 468.8 = Cascadia，Consolas 是 439.8）。
+     留一个不被识别的项在前面只会让解析结果依赖运气，所以把它挪到最后兜底。 */
+  --ff-mono: 'Cascadia Mono', 'Cascadia Code', 'JetBrains Mono', Consolas, ui-monospace, monospace;
+}
+
+/* ── 0b · 把背景视频从 root 背景**下面**捞出来 ────────────────────────────
+   运行时的背景层是 position: fixed / z-index: -2（在 root 背景之下）。实测在这种
+   合成顺序下，视频上屏只有**解码帧 11% 的亮度**（同一帧 drawImage 是满亮度，
+   回归斜率 0.115、相关 0.88）—— 眼睛看到的就是「一团糊的暗蓝」。
+   把这一层抬到 z-index: 0、再把应用主体抬到 1，视频立刻回到 83%（相关 0.995）。
+   这条规则是这套皮肤最关键的一条：不抬，后面所有配色都压在一层几乎看不见的画上。
+   （量具：scripts/diag-ff-verify.mjs —— 先暂停视频，保证画布与截图是同一帧，
+     再对同一块纯画面区域做「截图 vs 解码帧」的线性回归。） */
+/* **关键是 z-index 必须是正数**（实测扫了 13 个候选，只有它管用）：
+     · 运行时的 -2（默认）          视频对比度只剩 0.112
+     · 静态的 z-index: 0           0.112（看着「抬出来了」，合成器不认）
+     · 静态的 z-index: 1 / 5       **0.825**，与解码帧相关系数 0.995
+     · transform / opacity / filter / isolation / contain / perspective /
+       will-change 全试过，一个都没用（见 scripts/diag-ff-sweep.mjs）。
+   应用主体必须同时抬到它上面（z-index: 2），否则整块 UI 会被视频盖住。
+   量具：scripts/diag-ff-verify.mjs —— 先暂停视频保证画布与截图同帧，
+   再对同一块纯画面区域做「截图 vs 解码帧」的线性回归。 */
+/* 而且**必须是一次「变化」，不能是静态声明**：从加载起就写 z-index: 1（哪怕 !important）
+   仍旧是 0.112；在页面画过一帧之后再做这次跳变，才会被合成器接住（0.825）。
+   样式表能制造「变化」的手段只剩关键帧动画 —— 动画在层叠里高于内联普通声明，
+   所以这里**不能**再加 !important（加了就把动画自己压死了：那条 900ms 延迟的版本
+   就是这么失败的）。 */
+@keyframes ff-lift {
+  from { z-index: -2; }
+  to { z-index: 1; }
+}
+body [data-dsh-skin-layer='background'] {
+  animation: ff-lift 1ms linear 700ms forwards;
+  will-change: auto !important;
+}
+/* 背景视频**不加任何滤镜** —— 用户要求「亮度还原回去」，所以画面就是源片原本的样子。 */
+/* 只抬**应用主体**。千万不要写成 body > div:not([data-dsh-skin-layer]):not([data-dsh-plugin])：
+   菜单 / 浮层的门户也是 body 的直系 div，而且不带这两个属性 —— 被这条规则改成
+   position: relative + z-index: 2 之后会掉进文档流（实测工作区菜单与模式菜单被排到
+   y=1338、视口之外，表现就是「主界面上点了工作区和模式没反应」）。门户自带
+   position: fixed + z-index: 1100，必须让它们留着。
+   应用主体就是 #root（id 写在 index.html 里，四种壳共用同一份 HTML），所以只认它。
+   **兜底选择器已删除，不要再加回来**：宿主壳挂到 body 的直系容器未必带 class 或 role ——
+   Windows 桌面端的窗口菜单宿主只带 data-windows-menu（role="menubar" 在它的 shadow 树里），
+   被旧兜底命中后 position: fixed 被改写成 relative、z-index 1100 被改成 2，caption 左上的
+   「应用 / 编辑」随即消失且点不到（#1802）。声明与旧版逐字一致，只是作用对象只剩 #root；
+   tests/body-child-host-shells.spec.ts 用机械断言钉住「body 直系裸 div 不得当规则主体」。 */
+body > #root {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── 1 · 地面 = 一层夜，不是一堵墙 ─────────────────────────────────────────
+   引擎默认给画布铺不透明的 --sk-ground（视频层 z-index -2、画布 -1，会被整块盖死），
+   侧栏与详情栏同理刷成实色墙。这里三处全部让路：地面只留 12% 的夜，墙直接归零 ——
+   视频本身已经是深色的，再压一层重纱就什么也看不见了（实测：34% 时首屏那块区域
+   亮度只有 27.5，收到 12% 之后是 38.2，画面回来了）。 */
+body {
+  --sk-ground: transparent;
+  --sk-wall: transparent;
+}
+
+/* ── 1b · 把引擎铺在画面上的两处 10% 黑也撤掉 ─────────────────────────────
+   视频上面**这三处是外壳自己铺的全局压暗**（都不是 token，是写死的主题色）：
+     [data-phase='hero']    首屏    rgba(5,7,13,0.1)
+     [data-phase='active']  会话里  同一支 0.1（量具 scripts/diag-ff-conv.mjs 抓到的）
+     [data-dsh-frame]       整框    rgba(5,7,13,0.1)
+   两处叠起来就是 19%，再叠首屏氛围与 scrim，画面就只剩一层黑影。
+   用户明确要求「背景的黑色层去掉」，所以这里直接置透明。 */
+body [data-phase],
+body [data-dsh-frame] {
+  background-color: transparent !important;
+}
+
+/* ── 2 · 侧栏 = 驾驶舱左侧的仪表带 ─────────────────────────────────────────
+   薄玻璃 + 右缘一根冷蓝线。模糊挂**空的 ::before**（伪元素没有后代）：
+   给容器本体加 backdrop-filter 会让它成为 fixed 后代的包含块，
+   而设置面板就渲染在侧栏子树里 —— 液态玻璃当初就是这么把面板关进背景层的。 */
+body [data-slot='sidebar'] > *,
+body [data-dsh-surface='sidebar'],
+body [data-pane='sidebar'] {
+  background-color: transparent !important;
+  box-shadow: inset -1px 0 0 var(--ff-edge-soft) !important;
+}
+body [data-pane='sidebar'] { position: relative; }
+body [data-pane='sidebar']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ff-glass);
+}
+/* 右缘那道「能量轨」：从顶上亮起来、往下熄掉 —— 一整条竖线会把侧栏切得太死。
+   **1px 宽是量不出来的**：右缘那一列正好被侧栏子元素自己那条 inset 冷蓝线占着
+   （实测 x=279 永远是边缘色，青色一点也透不出来）。所以它不是一根线，而是一道
+   7px 宽的**漏光**：靠 mask 往下淡出，任何 1px 的覆盖都吃不掉它。 */
+body [data-pane='sidebar']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 58%;
+  pointer-events: none;
+  background-image: linear-gradient(270deg, #39ffd180 0%, #3a7bff33 44%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #ffffffff 0%, #ffffff44 58%, #ffffff00 100%);
+  mask-image: linear-gradient(180deg, #ffffffff 0%, #ffffff44 58%, #ffffff00 100%);
+}
+
+/* ── 3 · 工作区：一行一条信道 ──────────────────────────────────────────────
+   结构走 ARIA（不碰哈希类名）：
+     [role='treeitem'][aria-expanded]   工作区分组行
+     [role='treeitem'][aria-selected]   会话行
+   静息没有底色，只有悬停才浮起一档；选中 / 展开给左缘一道青色竖条 ——
+   那是这套里唯一表示「你在这里」的东西。 */
+body [data-pane='sidebar'] [role='treeitem'] {
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  transition: background-color 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
+}
+body [data-pane='sidebar'] [role='treeitem']:hover {
+  background-color: #3a7bff1f;
+  border-color: #3a7bff38;
+}
+/* 收起态 / 未选中态才写悬停：:hover 的特异性会把状态规则压掉（状态要分开写）。 */
+body [data-pane='sidebar'] [role='treeitem'][aria-expanded='false']:hover {
+  background-color: #3a7bff1a;
+  border-color: transparent;
+}
+body [data-pane='sidebar'] [role='treeitem'][aria-selected='false']:hover {
+  background-color: #3a7bff1a;
+  border-color: transparent;
+}
+body [data-pane='sidebar'] [role='treeitem'][aria-expanded='true'],
+body [data-pane='sidebar'] [role='treeitem'][aria-selected='true'] {
+  background-color: #3a7bff26;
+  border-color: #3a7bff47;
+  box-shadow: inset 2px 0 0 var(--ff-cyan);
+}
+/* 展开里的那批会话行：左缘一条更淡的竖轨，一眼看出它们属于上面那个工作区。 */
+body [data-pane='sidebar'] [role='treeitem']:not([aria-expanded]) {
+  box-shadow: inset 1px 0 0 #1e3a6b52;
+  border-radius: 0 7px 7px 0;
+}
+body [data-pane='sidebar'] [role='treeitem']:not([aria-expanded])[aria-selected='true'] {
+  box-shadow: inset 2px 0 0 var(--ff-cyan);
+}
+/* 当前会话的名字提到正文色，其余留一档。 */
+body [data-pane='sidebar'] [role='treeitem'][aria-selected='true'] {
+  color: #e8f1fff5;
+}
+body [data-pane='sidebar'] [role='treeitem'][aria-selected='false'] {
+  color: #e8f1ffc7;
+}
+
+/* 分区标题（工作区 / 搜索那一行）：HUD 小标 —— 等宽、全大写、字距拉开、青色。 */
+body [data-pane='sidebar'] h1,
+body [data-pane='sidebar'] h2,
+body [data-pane='sidebar'] h3 {
+  font-family: var(--ff-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #39ffd1b8;
+}
+body [data-pane='sidebar'] div:has(input[placeholder]) > span:first-of-type {
+  font-family: var(--ff-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #39ffd1b8;
+}
+/* 那条底线用背景图而不是 border：一行都不挪。 */
+body [data-pane='sidebar'] div:has(input[placeholder]) {
+  background-image: linear-gradient(90deg, #1e3a6b52 0 100%);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+}
+
+/* ── 4 · 侧栏三条入口 + 新会话 ─────────────────────────────────────────────
+   新会话 = 一块**全息接入板**：不再是一整颗电光蓝实心（那块蓝压在夜色的视频上太像贴纸），
+   改成「低饱和全息底 + 四角青色括号 + 一道扫光」—— 底是半透的，画面从里面透出来，
+   靠 1px 边、四角括号与扫光把「这里是入口」说清楚。它是全屏唯一带四角括号的控件。
+   其余两条入口（任务看板 / 插件）静息无底，悬停才浮起一层冷蓝。
+
+   四角括号的写法：一个空的 ::before，八条 1px 的 linear-gradient 各自是一条线段，
+   用 background-position / background-size 摆到四个角上 —— 比画 SVG 或塞四个元素都省，
+   而且跟着尺寸自适应。 */
+body [data-dsh-part='new-session'] {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px !important;
+  border: 1px solid #3a7bff8c !important;
+  background-image: linear-gradient(180deg,
+    #3a7bff4d 0%,
+    #0a102075 46%,
+    #39ffd124 100%) !important;
+  background-color: #0a10206b !important;
+  color: #e8f1fffa !important;
+  box-shadow: 0 0 20px #3a7bff42, inset 0 1px 0 #39ffd166 !important;
+  font-family: var(--ff-mono);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+/* **字距只下在「新会话」这四个字上，不能下在按钮上。**
+   这颗按钮里还藏着一颗悬停才出现的快捷键提示（Ctrl+Alt+N）。字距一旦从按钮继承下去，
+   提示会被撑宽 17px（实测 82 → 99px）、把标签遮罩挤窄（144 → 127px），
+   于是标签末尾正好落进遮罩那条 16px 的淡出带里 —— 「新会话」被切成「新会」。
+   结构：button > span(LabelMask) > span(Content) > span(Label)。 */
+body [data-dsh-part='new-session'] > span:first-child > span > span {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 10px #3a7bff8c;
+}
+body [data-dsh-part='new-session']::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9),
+    linear-gradient(#39ffd1d9, #39ffd1d9);
+  background-repeat: no-repeat;
+  background-size: 11px 1px, 1px 11px, 11px 1px, 1px 11px, 11px 1px, 1px 11px, 11px 1px, 1px 11px;
+  background-position:
+    left top, left top,
+    right top, right top,
+    left bottom, left bottom,
+    right bottom, right bottom;
+}
+body [data-dsh-part='new-session']::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -40%;
+  width: 38%;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  background-image: linear-gradient(90deg, transparent 0%, #39ffd138 50%, transparent 100%);
+  opacity: 0;
+  transition: transform 0.55s ease, opacity 0.2s ease;
+}
+body [data-dsh-part='new-session']:hover {
+  border-color: #39ffd1cc !important;
+  box-shadow: 0 0 26px #3a7bff66, inset 0 1px 0 #39ffd1a6 !important;
+}
+body [data-dsh-part='new-session']:hover::after {
+  transform: translateX(360%) skewX(-18deg);
+  opacity: 1;
+}
+body [data-dsh-part='new-session'] svg {
+  color: #39FFD1;
+  filter: drop-shadow(0 0 6px #39ffd18c);
+}
+body [data-dsh-part='sidebar-entry']:has([data-dsh-panel-entry]) {
+  border-radius: 10px !important;
+  border: 1px solid transparent;
+  background-color: transparent !important;
+  transition: background-color 0.13s ease, border-color 0.13s ease;
+}
+body [data-dsh-part='sidebar-entry']:has([data-dsh-panel-entry]):hover {
+  background-color: #3a7bff21 !important;
+  border-color: #3a7bff4d;
+}
+body [data-dsh-part='sidebar-entry']:has([data-dsh-panel-entry])[aria-current='page'] {
+  background-color: #3a7bff29 !important;
+  box-shadow: inset 2px 0 0 var(--ff-cyan);
+}
+
+/* ── 5 · 输入卡 = 一块 HUD 面板 ────────────────────────────────────────────
+   一圈电光蓝细边 + 顶上一条亮线（像被从上面照亮）；聚焦时整圈转成青色 + 4px 柔环。
+   卡片本体不能挂 backdrop-filter（壳里有 fixed 后代），玻璃照样挂在空的 ::before 上。 */
+body [data-composer-card] {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid #3a7bff6b;
+  background-color: transparent !important;
+  box-shadow: inset 0 1px 0 #3a7bff75, 0 0 22px #3a7bff24 !important;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  --dsw-alias-label-secondary: #b4c7e1;
+  --dsw-alias-label-caption: #a6bbd9;
+  --dsw-alias-label-tertiary: #9ab1d2;
+}
+/* 用户点名：「去掉对话框和壁纸中间的那层黑色的半透明背景，让背景视频直接显示出来。」
+   所以输入卡**不再铺底**，只剩一圈电光蓝细边 + 顶上一条亮线 + 聚焦柔环 ——
+   视频从卡片里直接透出来。代价是卡里的字直接压在画面上，所以给它们补一层
+   **单向的柔光**（不是硬描边，老坑 23）：暗底上把字托起来，亮底上也不至于糊。 */
+body [data-composer-card]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background-color: transparent;
+}
+/* 壳在「会话里 + 背景激活」时会给卡片挂一条 backdrop-filter（skin-center 的
+   「输入卡模糊」设置，当前 10px）。它由运行时注入、带 !important，
+   所以这里用**更高的特异性**把它压掉 —— 这条也是那套「磨砂玻璃会把背景视频糊掉」
+   的坑：卡片一挂上，整幅画面的相关性就从 0.99 掉到 0.87。 */
+body div[data-composer-card][data-dsh-responsive-part='composer'][data-composer-card] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* 卡内文字：一层柔光托底（单层，不是四向硬描边）。 */
+body [data-composer-card] [data-composer-placeholder],
+body [data-composer-card] [data-composer-input],
+body [data-composer-card] input,
+body [data-composer-card] textarea,
+body [data-composer-card] button {
+  text-shadow: 0 0 10px #05070de6, 0 0 22px #05070d99;
+}
+body [data-composer-card]:focus-within {
+  border-color: #39ffd1b3;
+  box-shadow: inset 0 1px 0 #39ffd18c, 0 0 0 4px #39ffd121, 0 0 26px #39ffd138 !important;
+}
+/* 占位符那一支不吃 label-tertiary（壳给了它自己的颜色），所以直接点到钩子上：
+   它是卡里最松的一档字，压在亮画上最先糊。 */
+body [data-composer-placeholder] {
+  letter-spacing: 0.02em;
+  color: #bccde6;
+  -webkit-text-fill-color: #bccde6;
+}
+
+/* 卡内下缘那几颗下拉（工作区 / 预设 / 模型 / 访问模式）：统一成胶囊。
+   用 aria-haspopup 定位，不用 aria-label —— 后者是中文文案，跟着语言变。 */
+body [data-composer-card] button[aria-haspopup],
+body [data-composer-seat] button[aria-haspopup] {
+  border-radius: 999px !important;
+  border: 1px solid #1e3a6b8c;
+  background-color: #1428478c !important;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  transition: border-color 0.13s ease, background-color 0.13s ease;
+}
+body [data-composer-card] button[aria-haspopup]:hover,
+body [data-composer-seat] button[aria-haspopup]:hover {
+  border-color: #39ffd157;
+  background-color: #39ffd121 !important;
+}
+/* 工具栏里的加号：这套里它是「接入」那颗，给一档品牌色底。 */
+body [data-composer-card] button[aria-haspopup='listbox'] {
+  border-color: #3a7bff6b;
+  background-color: #3a7bff29 !important;
+  color: #e8f1fff2 !important;
+}
+/* 发送键：圆钮。禁用态退成细线圈 —— 「还没画完」是线，可以按了才是那块实心。 */
+body [data-composer-card] button:not([aria-haspopup]):not([disabled]) {
+  border-radius: 999px;
+}
+body [data-composer-card] button[disabled] {
+  opacity: 1 !important;
+  background-color: transparent !important;
+  border: 1px solid var(--ff-edge-faint) !important;
+  color: var(--ff-ink-faint) !important;
+}
+body [data-decoration='chip'] {
+  border-radius: 999px;
+  border: 1px solid #3a7bff57;
+  background-color: #3a7bff24;
+  color: #e8f1ffeb;
+}
+
+/* ── 6 · 会话列：「进了会话才挂」的阅读纱 ─────────────────────────────────
+   第一版给整列挂了一层 blur(8px) 的玻璃，结果 **首屏也被一起糊了**：会话列就是
+   首屏那一整块（280,0,1400,1000），空会话里那层纱照样铺在视频上 —— 实测首屏
+   亮度 27.5，而市场试穿页同一处是 49.0（多了那层纱与它背后的一次模糊）。
+   所以判据要用 data-content-phase 的取值（首屏 hero / 会话 active），
+   而不是给滚动容器永久加纱。**别用 :has()**：真壳里整条规则会静默失效。
+   background-attachment: fixed 把纱钉在视口上，滚动时不会跟着内容走。 */
+/* 用户：「视频上方肯定还有一层变暗的图层，去掉这个图层，让视频直接显示在对话框后面。」
+   就是这一层 —— 会话里整片压在对话区上的「阅读纱」（0.40 → 0.52）。
+   现在**整片撤掉**：视频在对话区里也是原样显示，连输入卡后面那块都直接透出来。
+   正文的对比度改由**文字自己的单向柔光**承担（见下面那条）——
+   不是四向硬描边，只是一圈暗柔光，压在画面亮部时字也不会散。 */
+body [data-conversation-content]:not([data-content-phase='hero']) {
+  background-image: none !important;
+}
+/* 对话区里的文字：整棵子树继承一圈柔光。压在亮画面上时，字缘会有一层夜色的托底。 */
+body [data-conversation-content] {
+  text-shadow: 0 0 10px #05070deb, 0 0 24px #05070d9e;
+}
+
+/* ── 7 · 会话头部：一条带 HUD 底线的横带 ──────────────────────────────────
+   那四支字色变量分别重下 —— 实测漏掉后两支时，别处都好了、只有两个标签页还是 2.x:1。 */
+body [data-dsh-surface='session-header'] {
+  background-image: none !important;
+  box-shadow: inset 0 -1px 0 #1e3a6b8c !important;
+  position: relative;
+  --dsw-alias-label-secondary: #b4c7e1;
+  --dsw-alias-label-tertiary: #9ab1d2;
+  --dsw-alias-state-business-primary: #3a7bfffa;
+}
+/* **坑（与 rainy-night 是同一个 bug）**：这层玻璃原先挂在
+   [data-dsh-surface='session-header'] 的 ::before 上（position: absolute; inset: 0）。
+   而那个元素在真壳里是 **display: contents** —— 它不生成盒子，于是绝对定位的 ::before 的
+   包含块一路退到最近的定位祖先 [data-phase='active']（实测 280,0,1400x1000），
+   一条本该只填 76px 横带的规则，变成**整列对话区上的一层夜**（58% 的面板色）。
+   修法：玻璃改挂在**真有那条横带盒子**的元素上（[data-slot='conversation.header'] > header，
+   真壳实测 rect = 280,0,1400,76），整列的那条删掉。
+   这条修复的完整实测与量具见 skins/rainy-night/README.md 的同一节。 */
+body [data-slot='conversation.header'] > header {
+  background-color: var(--ff-glass-card) !important;
+}
+
+/* ── 8 · 消息 ──────────────────────────────────────────────────────────────
+   用户那一轮：左缘一道青线 + 一层极淡的冷蓝底，读成「这是我发出的信号」。 */
+body [data-chat-flow-kind='user'] {
+  border-radius: 10px;
+  background-color: #3a7bff1a;
+  box-shadow: inset 2px 0 0 #39ffd157;
+}
+body [data-chat-flow-kind='tool-call'],
+body [data-chat-flow-kind='context'] {
+  border-radius: 10px;
+  background-color: #05070d7a;
+  border: 1px solid #1e3a6b52;
+}
+body [data-dsh-part='message-body'] pre,
+body [data-dsh-part='message-body'] code {
+  border-radius: 8px;
+  border: 1px solid #1e3a6b52;
+}
+body [data-dsh-part='message-body'] blockquote {
+  border-left: 2px solid #39ffd157;
+  background-color: #3a7bff12;
+}
+
+/* ── 9 · 右栏（详情 / 指南） */
+body [data-slot='details'] > *,
+body [data-dsh-surface='details'],
+body [data-pane='details'] {
+  background-color: transparent !important;
+  box-shadow: inset 1px 0 0 var(--ff-edge-soft) !important;
+}
+body [data-pane='details'] { position: relative; }
+body [data-pane='details']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ff-glass);
+}
+
+/* ── 10 · 浮层：菜单要「厚」 ──────────────────────────────────────────────
+   菜单面的 token 要写两个名字：平台声明的是不带 alias- 的那支，
+   而各模块 CSS 读的是 var(--dsw-specific-menu)。只写一支 = 写了个没人读的变量。 */
+body {
+  --dsw-specific-menu: #0a1020cc;
+  --dsw-alias-specific-menu: #0a1020cc;
+}
+body [role='menu'] {
+  border-radius: 12px;
+  border: 1px solid #1e3a6b8c;
+  box-shadow: 0 12px 40px #05070db8;
+}
+
+/* ── 11 · 链接 / 选区 / 滚动条 / 光标：全部走青 ─────────────────────────── */
+body a { color: #39FFD1; }
+body ::selection { background-color: #39ffd142; }
+body * { scrollbar-color: #39ffd14d transparent; }
+body input,
+body textarea { caret-color: #39FFD1; }
+
+/* ── 12 · 审批 / 提问 / 计划：这三张卡必须一眼从正文里跳出来 ─────────────── */
+body [data-approval-key],
+body [data-question-key],
+body [data-plan-review-key] {
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px #39ffd157, inset 2px 0 0 #39ffd199;
+}
+
+/* ── 12b · 全息化补完：把剩下还「素着」的元素补齐 ─────────────────────────
+   这一节是照着真壳逐块截图找出来的漏网之鱼（scripts/diag-ff-audit.mjs + diag-ff-hooks2.mjs）：
+   弹出菜单、侧栏底部的用量卡、输入卡下面的统计条、过程行/工具行、发送键、代码块、
+   「展开其余 N 个会话」。语言和前面一致：1px 线、四角括号、等宽小字、青色只给状态。 */
+
+/* 1 · 弹出菜单 / 列表：一圈品牌细边 + 四角青色括号 + 顶上一条亮线 */
+body [role='menu'],
+body [role='listbox'] {
+  border: 1px solid #3a7bff73 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 14px 44px #05070db8, inset 0 1px 0 #39ffd159 !important;
+  font-family: var(--ff-mono);
+}
+body [role='menu']::before,
+body [role='listbox']::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(#39ffd1bf, #39ffd1bf),
+    linear-gradient(#39ffd1bf, #39ffd1bf),
+    linear-gradient(#39ffd1bf, #39ffd1bf),
+    linear-gradient(#39ffd1bf, #39ffd1bf);
+  background-repeat: no-repeat;
+  background-size: 9px 1px, 1px 9px, 9px 1px, 1px 9px;
+  background-position: left top, left top, right bottom, right bottom;
+}
+body [role='menuitem'],
+body [role='option'] {
+  border-radius: 6px !important;
+  font-family: var(--ff-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+body [role='menuitem']:hover,
+body [role='option']:hover,
+body [role='menuitem'][data-highlighted],
+body [role='option'][data-highlighted] {
+  background-color: #3a7bff29 !important;
+  box-shadow: inset 2px 0 0 #39ffd1bf;
+}
+
+/* 2 · 侧栏底部那张用量卡 = HUD 读数板 */
+body [data-dsh-usage-foot-card] {
+  border: 1px solid #3a7bff52;
+  border-radius: 8px;
+  background-color: #0a102085 !important;
+  box-shadow: inset 0 1px 0 #39ffd14d;
+  font-family: var(--ff-mono);
+}
+body [data-dsh-usage-foot-card] span {
+  font-family: var(--ff-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* 3 · 输入卡下面的统计条：等宽小字 + 青色数字 */
+body [data-composer-stats] {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+body [data-composer-stats] * {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4 · 过程行 / 工具行 / 上下文行 = HUD 日志行：左缘一道青线 + 等宽小字 */
+body [data-turn-tail],
+body [data-turn-process-member],
+body [data-turn-process-answer] {
+  border-left: 2px solid #39ffd173;
+  padding-left: 10px;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+}
+body [data-chat-flow-kind='tool-call'],
+body [data-chat-flow-kind='context'] {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+}
+
+/* 5 · 消息尾部的「用量 / 时间」那一行：等宽 + 细线分隔 */
+body [data-clock] {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* 6 · 发送键 = 发射键：和「新会话」同一族的**方角** HUD 键（圆钮太软，和整套方角语言不搭）。
+   定位：卡里唯一「没有 aria-haspopup」且不在官方插槽里的按钮 —— button.primary 身上没有
+   data 钩子，只能靠这条排除法（权限那颗有 data-slot=conversation.input.permission，见最后一条）。
+   壳给它的圆角与实心都是 token 下的，所以要 !important；禁用态单独一条（特异性更高）。 */
+body [data-composer-card] button:not([aria-haspopup]) {
+  position: relative;
+  border-radius: 9px !important;
+  border: 1px solid #3a7bff99 !important;
+  background-image: linear-gradient(180deg, #3a7bfff0 0%, #679aff 100%) !important;
+  background-color: #3A7BFF !important;
+  color: #e8f1fffc !important;
+  box-shadow: 0 0 0 1px #39ffd173, inset 0 1px 0 #39ffd18c,
+    0 0 18px #3a7bff73 !important;
+  transition: box-shadow 0.16s ease, filter 0.16s ease;
+}
+body [data-composer-card] button:not([aria-haspopup]):hover:not([disabled]) {
+  background-image: linear-gradient(180deg, #679aff 0%, #39ffd18c 100%) !important;
+  box-shadow: 0 0 0 1px #39ffd1d9, inset 0 1px 0 #39ffd1cc,
+    0 0 26px #39ffd173 !important;
+}
+body [data-composer-card] button:not([aria-haspopup]) svg {
+  filter: drop-shadow(0 0 6px #39ffd199);
+}
+/* 禁用态（输入框还空着）：退成一根细线圈 + 暗青箭头 —— 「还没画完」是线，可以按了才是那块实心。 */
+body [data-composer-card] button:not([aria-haspopup])[disabled] {
+  background-image: none !important;
+  background-color: transparent !important;
+  border: 1px solid #1e3a6b99 !important;
+  color: #39ffd16b !important;
+  box-shadow: none !important;
+}
+body [data-composer-card] button:not([aria-haspopup])[disabled] svg {
+  filter: none;
+}
+/* 访问模式那颗（官方插槽 conversation.input.permission）是 chip，别吃上面那套。 */
+body [data-composer-card] [data-slot='conversation.input.permission'] button {
+  border-radius: 999px !important;
+  border: 1px solid #1e3a6b8c !important;
+  background-image: none !important;
+  background-color: #1428478c !important;
+  color: #e8f1ffe6 !important;
+  box-shadow: none !important;
+}
+
+/* 7 · 代码块 = 终端窗口：左缘一道青线 + 等宽 + 顶部一条亮线
+   **选择器原来挂在 [data-dsh-part='message-body'] 下，在真壳里是死规则** ——
+   第六轮实测代码块的祖先链是
+     pre[data-dsh-responsive-part=code] > div[data-code-block-content] > div[data-code-wrap]
+       > div[data-slot=conversation.chat.node] > div[data-dsh-part=message-row]
+   里面**没有 message-body**（是 message-**row**），所以这条规则的效果一条都没生效：
+   实测代码块的 border 是 none、圆角 0、没有左缘青线，字体也还是壳的。
+   这和「选择器以 html 开头」是同一类事故：**规则在，但永远命中不了，且一声不响。**
+   （另外：往这个文件的注释里写反引号会直接截断整个模板字面量 —— 见第 7 节坑 1。） */
+body pre {
+  border-left: 2px solid #39ffd18c !important;
+  border-radius: 8px !important;
+  background-color: #05070d9e !important;
+  box-shadow: inset 0 1px 0 #39ffd138;
+  font-family: var(--ff-mono);
+}
+
+/* 7b · 代码字体：壳给代码写死的栈是
+     "SF Mono", "JetBrains Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, Courier, …
+   前**三支在这台机器上都不存在**（probe-fonts.mjs 实测），于是静默落到 **Consolas** ——
+   而皮肤自己的等宽是 Cascadia Mono。结果是同一个界面里两套等宽：
+   读数走 Cascadia、代码走 Consolas。行内代码 chip、键帽、变更卡的文件行同理。 */
+body code,
+body kbd,
+body samp,
+body pre,
+body [data-slot='conversation.chat.turnTail'] button,
+body [data-slot='conversation.chat.turnTail'] code {
+  font-family: var(--ff-mono) !important;
+}
+
+/* 8 · 「展开其余 N 个会话」：等宽小字，悬停转青 */
+body button[data-row-key] {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+body button[data-row-key]:hover {
+  color: #39ffd1d9 !important;
+}
+
+/* 9 · 会话头部的两个标签页：等宽 + 当前页一条青色底线 */
+body [role='tab'] {
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+body [role='tab'][aria-selected='true'],
+body [role='tab'][data-active] {
+  box-shadow: inset 0 -2px 0 #39ffd1d9 !important;
+  color: #e8f1fffa !important;
+}
+
+/* 10 · 窗口右侧那排小图标（设置 / 下载 / 帮助）：悬停转青 */
+body [data-dsh-surface='overlay'] button:hover,
+body [data-shell-overlay] button:hover {
+  color: #39ffd1e6 !important;
+}
+
+/* ── 12c · 按钮与图标补完（第二轮排查：工具提示、图标键、交付卡、卡里的加号） ──
+   第二轮是用户点名「按钮、图标都可以」之后做的，量具 scripts/diag-ff-more.mjs。
+   注意：那颗 tooltip 身上被语义适配器**误挂了 data-dsh-part=resize-handle**
+   —— 因为适配器用 [data-side] 找分栏手柄，而 tooltip 自己带 data-side=top。
+   所以下面一律用 [role=tooltip] / [data-sidebar-right-expand] 这类真钩子。 */
+
+/* 1 · 工具提示：壳给的是**米白底**（在这套夜里像块创可贴）→ 夜色玻璃 + 青边 + 等宽 */
+body [role='tooltip'] {
+  background-color: #0a1020f0 !important;
+  color: #e8f1fff5 !important;
+  border: 1px solid #39ffd16b;
+  border-radius: 8px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 26px #05070db8, inset 0 1px 0 #39ffd159;
+}
+body [role='tooltip'] kbd {
+  background-color: #3a7bff3d !important;
+  border: 1px solid #39ffd166;
+  border-radius: 4px;
+  color: #39ffd1f2 !important;
+  font-family: var(--ff-mono);
+}
+
+/* 2 · 侧栏工作区那一排图标键（搜索 / 筛选 / 新建工作区）+ 行内动作键 */
+body [data-slot='sidebar.workspaces'] button {
+  border-radius: 6px !important;
+  transition: background-color 0.13s ease, color 0.13s ease, box-shadow 0.13s ease;
+}
+body [data-slot='sidebar.workspaces'] button:hover {
+  background-color: #3a7bff29 !important;
+  color: #39ffd1eb !important;
+  box-shadow: inset 0 0 0 1px #3a7bff59;
+}
+
+/* 3 · 会话头部右下那排小图标 + 后台任务药丸 */
+body [data-dsh-surface='session-header'] button {
+  border-radius: 6px !important;
+  font-family: var(--ff-mono);
+  transition: background-color 0.13s ease, color 0.13s ease;
+}
+body [data-dsh-surface='session-header'] button:hover {
+  background-color: #3a7bff29 !important;
+  color: #39ffd1eb !important;
+}
+body [data-dsh-surface='session-header'] [data-sidebar-right-expand='true'] {
+  border: 1px solid #1e3a6bb3;
+}
+
+/* 4 · 消息下面那排动作图标（复制 / 赞 / 踩 / 分支 / 用量） */
+body [data-clock] button {
+  border-radius: 7px !important;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+body [data-clock] button:hover {
+  background-color: #3a7bff29 !important;
+  color: #39ffd1eb !important;
+}
+
+/* 5 · 交付卡 / 附件卡：一块小 HUD 板（左侧一道青线 + 1px 边 + 等宽文件名）
+   **必须有底色**：皮肤只给了边线，壳体自带的中性灰 rgb(33,33,35) 就直接露出来了 ——
+   实测在变更卡里就是两块灰板，和整套冷蓝格格不入（第六轮抓到）。 */
+body [data-presented-file] {
+  background-color: #0a102085 !important;
+  border: 1px solid #1e3a6bb8 !important;
+  border-left: 2px solid #39ffd18c !important;
+  border-radius: 9px !important;
+  box-shadow: inset 0 1px 0 #39ffd138;
+  transition: border-color 0.13s ease, background-color 0.13s ease;
+}
+body [data-presented-file]:hover {
+  border-color: #39ffd18c !important;
+  background-color: #3a7bff1a !important;
+}
+
+/* 6 · 卡里那颗加号：和发射键同一族（方角 + 青边），它是「接入」不是主操作，所以不填实心 */
+body [data-composer-card] button[aria-haspopup='listbox'] {
+  border-radius: 9px !important;
+  border: 1px solid #39ffd173 !important;
+  background-color: #0a10208c !important;
+  color: #39ffd1eb !important;
+  box-shadow: inset 0 1px 0 #39ffd14d;
+}
+body [data-composer-card] button[aria-haspopup='listbox']:hover {
+  border-color: #39ffd1d9 !important;
+  background-color: #3a7bff33 !important;
+}
+
+/* 7 · 键盘焦点环：全屏统一走青（原生的蓝色描边在这套里不成立） */
+body :focus-visible {
+  outline: 2px solid #39ffd1a6 !important;
+  outline-offset: 1px;
+}
+
+/* ── 12d · 插件界面补完（第三轮：使用统计面板 / 菜单内层 / 键帽容器） ────────
+   第三轮是**覆盖量具** scripts/diag-ff-coverage.mjs 扫出来的。它不看类名，只看 paint：
+   把每个可见元素的 computed 底色 / 边色 / 阴影 / 背景图，拿去比对 ff 的五支特征色
+   （panel / raised / line / brand / cyan），有可见面却一支都没命中的就是 BARE。
+   跑完 10 个状态（首屏 / 菜单 / 工具提示 / 侧栏搜索 / 宠物 / 任务看板 / 会话 /
+   设置-使用统计 / 设置-皮肤 / 设置-内置插件）之后，主界面只剩三块没碰过：
+
+   1. 设置弹窗里那块「使用统计」面板（插件 data-dsh-plugin=usage）—— 26 处裸面。
+      整块是素面：1px 银白细边 + 比例字体 + 一排近乎纯白的条形图
+      （实测柱体 rgba(232,241,255,0.55) 上屏 lum 0.94，是全屏最亮的白块，
+      直接违反「不要大面积纯白」）。插件用 CSS-module 哈希类名（cvtkAW_xxx），
+      不能碰 —— 稳定钩子只有 data-dsh-part，所以下面全部挂在它上面。
+      条形图的「填充」身上只有内联 width、底色是 CSS 给的，于是可以用
+      [style*='width'] 命中填充、用 :has(> span[style*='width']) 命中轨道；
+      主条 8px 与模型条 4px 形状一样，一起改色正好。
+   2. 菜单内层那层填充是壳的中性灰 rgba(67,69,74,0.45)，被夹在品牌蓝框里。
+      外层 _surface_ 与内层 _material_ 都是 (0,1,0)，body 前缀一压就赢。
+   3. 工具提示里包住 kbd 的那层 span（_keys_xxx）底是 rgb(236,244,255)，
+      亮到 lum 0.95 —— 键帽上屏变成一排白药丸。kbd 自己是好的，只修这层底板。
+
+   注意：任务看板插件与宠物插件**这一轮没动**（宠物本体是 canvas，CSS 够不着）；
+   会话视图里量具报的那几处 BARE 是文字淡出遮罩（oklab 渐变），属误报，不是界面元素。 */
+
+/* 1 · 使用统计面板：先把整块的字体拉回等宽（壳给的是 Segoe UI 比例字体） */
+body [data-shortcut-modal='settings'] [data-dsh-plugin='usage'] {
+  font-family: var(--ff-mono);
+}
+
+/* 2 · 三张卡 + 设置行：夜色玻璃 + 1px 冷蓝线 + 顶上一条青亮线。
+   顶上那条青线用 inset 阴影画（不是 ::before）—— 插件内部有绝对定位的子节点，
+   给它加 position: relative 有可能挪动它们，inset 阴影零布局风险。 */
+body [data-shortcut-modal='settings'] [data-dsh-part='today-card'],
+body [data-shortcut-modal='settings'] [data-dsh-part='balance-card'],
+body [data-shortcut-modal='settings'] [data-dsh-part='trend-card'],
+body [data-shortcut-modal='settings'] [data-dsh-part='settings-row'] {
+  background-color: #0a10206b !important;
+  background-image: linear-gradient(180deg, #14284747 0%, #05070d57 100%) !important;
+  border: 1px solid #1e3a6b8c !important;
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 0 #39ffd14d;
+}
+
+/* 3 · 标签页：撤掉壳给的 1px / 2px 银白描边，改一条冷蓝细底线；选中态走青 */
+body [data-shortcut-modal='settings'] [data-dsh-part='tabs'] {
+  border: 0 !important;
+  box-shadow: inset 0 -1px 0 #1e3a6b8c;
+}
+body [data-shortcut-modal='settings'] [data-dsh-part='tabs'] [role='tab'] {
+  border: 0 !important;
+  border-radius: 6px 6px 0 0 !important;
+  background-color: transparent !important;
+  color: #e8f1ff9e !important;
+  font-family: var(--ff-mono);
+  letter-spacing: 0.06em;
+}
+body [data-shortcut-modal='settings'] [data-dsh-part='tabs'] [role='tab'][aria-selected='true'] {
+  background-color: #3a7bff24 !important;
+  color: #39ffd1f2 !important;
+  box-shadow: inset 0 -2px 0 #39ffd1d9;
+}
+
+/* 4 · 条形图：白条 → 品牌蓝到青的渐变；轨道退成一档冷蓝。
+   实测：轨道 silver@0.08（主条）/ silver@0.06（模型条），
+   填充 silver@0.55 / silver@0.35 —— 0.55 那一档上屏就是纯白。 */
+body [data-dsh-part='usage-chart'] span:has(> span[style*='width']) {
+  background-color: #1e3a6b73 !important;
+}
+body [data-dsh-part='usage-chart'] span[style*='width'] {
+  background-color: transparent !important;
+  background-image: linear-gradient(90deg, #3a7bffd9 0%, #39ffd1b3 100%) !important;
+}
+
+/* 5 · 面板里的按钮（刷新 / 打开配置文件 / 收起）：细线 + 等宽，悬停转青。
+   标签页也是 button，但上面那条 [data-dsh-part='tabs'] [role='tab'] 特异性更高，不会被这条盖住。 */
+body [data-shortcut-modal='settings'] [data-dsh-plugin='usage'] button {
+  border: 1px solid #1e3a6bb8 !important;
+  border-radius: 6px !important;
+  background-color: #0a10206b !important;
+  color: #e8f1ffd1 !important;
+  font-family: var(--ff-mono);
+  transition: border-color 0.13s ease, color 0.13s ease, background-color 0.13s ease;
+}
+body [data-shortcut-modal='settings'] [data-dsh-plugin='usage'] button:hover {
+  border-color: #39ffd18c !important;
+  background-color: #3a7bff29 !important;
+  color: #39ffd1eb !important;
+}
+
+/* 6 · 面板里的输入框与供应商行 */
+body [data-shortcut-modal='settings'] [data-dsh-plugin='usage'] input {
+  background-color: #05070d8c !important;
+  border: 1px solid #1e3a6b8c !important;
+  border-radius: 6px !important;
+  color: #e8f1ffeb !important;
+  font-family: var(--ff-mono);
+}
+body [data-shortcut-modal='settings'] [data-dsh-plugin='usage'] input:focus {
+  border-color: #39ffd1b3 !important;
+  box-shadow: 0 0 0 3px #39ffd129;
+}
+body [data-shortcut-modal='settings'] [data-dsh-part='provider-row'] {
+  border-radius: 6px !important;
+}
+body [data-shortcut-modal='settings'] [data-dsh-part='provider-row']:hover {
+  background-color: #3a7bff1f !important;
+}
+
+/* 7 · 菜单内层：壳的中性灰 → 夜色。外层已经有品牌蓝框 + 四角青括号了，
+   缺的就是这层底板（子菜单里同样复现，一条规则两处都修）。 */
+body [role='menu'] > div {
+  background-color: #0a1020f0 !important;
+}
+
+/* 8 · 工具提示里包住键帽的那层底板：壳给的是近白 rgb(236,244,255)（lum 0.95）。
+   kbd 自己已经是一条青药丸了，问题只在这层。 */
+body [role='tooltip'] span:has(> kbd) {
+  background-color: transparent !important;
+}
+
+/* 9 · 「当前」徽章：插件身上**唯一一个没有 data 钩子**的元素 —— 实测 markup 只有
+   class="cvtkAW_currentBadge"，而构建守卫禁止碰哈希类名（[class*=…] 会让构建直接失败，
+   见 build-skin.mjs 的 fragility invariant）。所以这里按**实测的直系结构**定位，
+   两处出现点的链都是量出来的、不是猜的：
+     provider-list > provider-row > provider-name > 徽章               (div > span > span)
+     usage-chart   > chart-provider > chart-head > provider-name > 徽章 (div > span > span > span)
+   第二条必须带 :not([style])：同深度还有一个 chartModelFill 带内联 width，
+   漏了它会把第 4 条刚画好的条形图渐变一起冲掉。 */
+body [data-shortcut-modal='settings'] [data-dsh-part='provider-list'] > div > span > span,
+body [data-shortcut-modal='settings'] [data-dsh-part='usage-chart'] > div > span > span > span:not([style]) {
+  background-color: #39ffd11f !important;
+  border: 1px solid #39ffd173 !important;
+  border-radius: 4px !important;
+  color: #39ffd1eb !important;
+  font-family: var(--ff-mono);
+}
+
+/* ── 12e · 图标全息化（第四轮：用户点名「按钮的图标也改成全息样式的图标」） ──────
+   量具 scripts/diag-ff-icons.mjs（4 个状态，按 <svg> 逐支量）拉出来的实情：
+
+   1. **整套图标本来就是 1px 线稿**：fill:none + stroke:currentColor，
+      stroke-width 1 / 1.3 / 1.4px。也就是说「全息」要的线框骨架已经在，缺的只是**颜色与辉光**。
+   2. 它们的描边是壳自己的五支板岩蓝，**一支都不在色板里**：
+        rgb(143,168,204)  侧栏图标 / 标签页 / 交付卡
+        rgb(110,130,161)  会话行、消息动作、工具行（数量最多；会话视图里 486+ 个）
+        rgb(180,199,225)  会话头部
+        rgb(154,177,210)  会话头部动作
+        rgb(166,187,217)  模型选择
+   3. **每一处的 stroke 都恰好等于该元素的 color** —— 壳用的是 currentColor。
+      所以只要下 color，描边自己跟着走。**不要**去强下 stroke：permission / agent-preset
+      那几支是「部分填充 + 部分描边」混排的，强给 stroke 会让填充图形多描一圈边。
+
+   做法：静息 = 色板内的冷银（那些板岩蓝在夜里偏灰）+ 一层淡品牌蓝辉光；
+   悬停 / 展开 / 按下 = 青 + 更实的青辉光。**青色仍然只给状态**。
+   辉光只常亮在「机壳图标」上（侧栏 / 输入卡 / 会话头部那一圈）——会话正文里有 486+ 个图标，
+   给它们全挂 filter 是拿滚动性能换装饰，不值；正文图标只在悬停时亮。 */
+
+/* 1 · 线稿图标静息色：**品牌电光蓝提亮一档**（= mix(brand, ink, 0.24)）。
+   实测第一版用「冷银」是不够的 —— 壳原来的板岩蓝 rgb(143,168,204) 与银白在夜里
+   亮度相近，换完肉眼几乎看不出差别（before/after 截图对比过）。
+   下在 svg 上而不是按钮上，这样按钮里的等宽读数不会被一起改色。 */
+/* 范围下在**所有 svg** 上，不是只下在 button 里：实测交付卡那颗「更多打开方式」
+   （slot:deliverables.file.actions）既不是 button 也不是 [role=button]/a，
+   只按按钮圈范围会漏掉它（量具当场抓到了 rgb(143,168,204) 的残留）。
+   例外只有两个，各自在下面单列：彩色徽章（第 6 条）与品牌标（第 4 条）。 */
+body svg {
+  color: #6497ff;
+  transition: color 0.13s ease, filter 0.13s ease;
+}
+
+/* 2 · 机壳那一圈图标常亮一层淡品牌辉光（范围刻意收窄，避开正文里成百上千的图标） */
+body [data-slot^='sidebar.'] svg,
+body [data-slot='settings.launcher'] svg,
+body [data-slot^='conversation.composer'] svg,
+body [data-slot^='conversation.input'] svg,
+body [data-slot^='conversation.session.header'] svg,
+body [data-slot^='conversation.hero'] svg,
+body [data-dsh-part='sidebar-entry'] svg,
+body [data-dsh-part='new-session'] svg,
+body [data-dsh-part='foot-card-main'] svg,
+body [data-dsh-part='foot-card-toggle'] svg {
+  color: #79a5ff;
+  filter: drop-shadow(0 0 4px #3a7bff9e);
+}
+
+/* 3 · 已经点亮的图标：新会话那颗 + 输入卡的加号本来就被皮肤点亮成青色，保持住
+   （它们的选择器比第 1 条更专指，写在后面只是为了让意图一眼可见） */
+body [data-dsh-part='new-session'] svg,
+body [data-slot='conversation.composer.bar'] svg {
+  color: #39ffd1f2;
+}
+
+/* 4 · 侧栏左上角那枚品牌标：整面板唯一一处实心图标，给它最亮的一档 + 品牌辉光 */
+body button:has([data-slot='sidebar.brand.name']) svg,
+body [data-slot='conversation.hero.brand.mark'] svg {
+  color: #e8f1fffa;
+  filter: drop-shadow(0 0 6px #3a7bff8c);
+}
+
+/* 5 · 悬停 / 展开 / 按下 / 当前：转青 + 更实的青辉光（这是「状态」，青色只出现在这里） */
+body button:hover svg,
+body button[aria-expanded='true'] svg,
+body button[aria-pressed='true'] svg,
+body [role='button']:hover svg,
+body [role='menuitem']:hover svg,
+body [role='option']:hover svg,
+body a:hover svg {
+  color: #39ffd1f2;
+  filter: drop-shadow(0 0 6px #39ffd1b3);
+}
+
+/* 6 · 例外：「本轮改动」那支 **28x28** 是彩色徽章（蓝底 + 白线），不是线稿图标，
+   拉进色板会毁掉它的语义。color:inherit = 恢复成「什么都不做」（它本来就是继承来的）。
+   **必须收窄到 viewBox='0 0 28 28'**：第一版写成整个 turnTail 子树，
+   结果把子树里的「展开全部 17 个改动文件」小箭头**和交付卡的「更多打开方式」**
+   一起豁免了（级联探针 diag-ff-cascade.mjs 查出来：deliverables.file.actions 的祖先链是
+   deliverables.file.actions -> conversation.chat.turnTail -> conversation.chat.node）。
+   量具当场抓到 rgb(110,130,161) 与 rgb(143,168,204) 各两处残留。 */
+body [data-slot='conversation.chat.turnTail'] svg[viewBox='0 0 28 28'] {
+  color: inherit;
+  filter: none;
+}
+
+/* 7 · 「上下文已用 xx%」那枚进度环（composer.bar 里 14x14 的那支）：
+   两个 circle 的描边都不是 currentColor，而是壳从自己的 token 取的显式色 ——
+   轨道侥幸命中色板（壳的 token 被皮肤改成了 #1E3A6B），**进度那一段没有**，
+   实测残留 rgb(110,130,161)。所以这里得直接下 stroke，光下 color 没用。 */
+body [data-slot='conversation.composer.bar'] svg circle:first-of-type {
+  stroke: #1e3a6b8c !important;
+}
+body [data-slot='conversation.composer.bar'] svg circle:last-of-type {
+  stroke: #39ffd1e6 !important;
+}
+
+/* ── 12f · 字体：把「机壳与读数」统一到等宽（第五轮：用户点名「顺便改改字体」） ──
+   分工是刻意的一条线：**机壳与读数走等宽，正文散文留在比例字体** ——
+   中文散文用等宽读起来累，而 HUD 的读数本来就该是等宽小字（第 3 节的设计语言）。
+
+   实测（scripts/diag-ff-fontshot.mjs）还没统一的三个地方：
+     · 设置弹窗：左导航与按钮是 Segoe UI，而它自己的内容（用量面板）**已经是等宽** ——
+       同一个弹窗里两套字体；
+     · 会话头部：标题行 / 标签页 / 右侧状态全是比例字体；
+     · 侧栏：分区标题已是等宽，但会话行（标题 + 右侧时间戳）与插件入口还是比例字体。
+   中文在等宽字体里没有字形，会落到 --ff-mono 后面的中文回退（现在是 DengXian），
+   所以这几条规则的实际效果是：**数字与英文词变等宽**，汉字只换字体不改度量。 */
+
+/* 1 · 设置弹窗：整块统一（它自己的内容已经是等宽了） */
+body [data-shortcut-modal='settings'],
+body [data-dsh-surface='settings'] {
+  font-family: var(--ff-mono);
+}
+
+/* 2 · 侧栏的读数：会话行（标题 + 右侧时间）、插件入口、底部用量卡 */
+body [data-slot='sidebar.workspaces'],
+body [role='treeitem'],
+body [data-dsh-part='sidebar-entry'],
+body [data-dsh-part='foot-card'] {
+  font-family: var(--ff-mono);
+}
+
+/* 3 · 会话头部：标题行 / 标签页 / 右侧状态与动作 */
+body [data-slot='conversation.header'],
+body [data-slot^='conversation.session.header'] {
+  font-family: var(--ff-mono);
+}
+
+/* ── 12h · 右栏 / 停靠面板（dockkit）── 第六轮顺出来、本轮做 ──────────────────
+   右栏是 data-dockkit-* 这整套停靠系统（工作区文件浏览 / 新建终端 / 空面板），
+   前六轮一次都没碰过。实测它**并不是完全没样式**：面板底与引导卡的边都吃到了皮肤的 token
+   （夜 0.1、line 0.6，因为壳体建模在 --dsw-* 上）。缺的是**这套皮的 HUD 语言** ——
+   一条冷蓝细线、等宽读数、8~9px 的圆角、以及入口上的青色记号。
+
+   实测到的钩子（都是稳定的语义钩子）：
+     [data-dockkit-surface]            整块右栏
+     [data-dockkit-content]            每个分栏的 section（底 = rgba(5,7,13,0.1)）
+     [data-dockkit-strip] / [role=tablist]   标签条
+     [data-dockkit-tab] / [role=tab]   标签（8px 圆角，已经是等宽）
+     [data-dockkit-add-tab] / [data-dockkit-split-button] / [data-dockkit-strip-chrome]
+     [sidebar-right-mode='fullscreen'] / [sidebar-right-toggle='true']   标题栏右侧两个图标键
+     [data-sidebar-right-guide-entry='files' | 'terminal']   引导态那两张 380x68 的大卡
+
+   **没量到的**：文件浏览器与终端**本体**内部没有找到稳定钩子（只有哈希类名），
+   所以那两块只吃到下面第 1 条的等宽与分栏底，具体行样式留到下一轮（要先用量具把钩子挖出来）。 */
+
+/* 1 · 分栏：夜色玻璃 + 左缘一条冷蓝细线（它贴着会话区，需要一条界线）
+   顺带把整块右栏的字体收进等宽 —— 右栏里全是读数（路径、终端、文件名），
+   按第 3 节的设计语言本来就该是等宽小字。 */
+body [data-dockkit-surface] {
+  font-family: var(--ff-mono);
+}
+body [data-dockkit-content] {
+  background-color: #0a102057 !important;
+  box-shadow: inset 1px 0 0 #1e3a6b8c;
+}
+
+/* 2 · 标签条与标签：一条冷蓝底缘；选中走青（青色只给状态） */
+body [data-dockkit-strip] {
+  box-shadow: inset 0 -1px 0 #1e3a6b8c;
+}
+body [data-dockkit-tab] {
+  border-radius: 6px !important;
+  font-family: var(--ff-mono);
+  transition: background-color 0.13s ease, color 0.13s ease;
+}
+body [data-dockkit-tab][aria-selected='true'] {
+  background-color: #3a7bff29 !important;
+  color: #39ffd1f2 !important;
+  box-shadow: inset 0 -2px 0 #39ffd1b3;
+}
+body [data-dockkit-tab]:hover {
+  color: #39ffd1eb !important;
+}
+
+/* 3 · 标题栏那排图标键（加标签 / 分栏 / 全屏 / 收起）：和侧栏图标键同一族 */
+body [data-dockkit-add-tab],
+body [data-dockkit-split-button],
+body button[sidebar-right-mode='fullscreen'],
+body button[sidebar-right-toggle='true'] {
+  border-radius: 6px !important;
+  color: #e8f1ffb3;
+  transition: background-color 0.13s ease, color 0.13s ease;
+}
+body [data-dockkit-add-tab]:hover,
+body [data-dockkit-split-button]:hover,
+body button[sidebar-right-mode='fullscreen']:hover,
+body button[sidebar-right-toggle='true']:hover {
+  background-color: #3a7bff29 !important;
+  color: #39ffd1eb !important;
+  box-shadow: inset 0 0 0 1px #3a7bff59;
+}
+
+/* 4 · 引导态那两张 380x68 的大卡：这是「入口」，按设计语言给全息接入板的做法 ——
+   冷蓝细线 + 顶上一条青亮线 + 左缘一道青竖条，圆角从壳的 20px 收到 9px。
+   （files 那张是 button 自己带属性，terminal 那张是一层 div 包着 button，两条都要。） */
+body button[data-sidebar-right-guide-entry],
+body [data-sidebar-right-guide-entry] button {
+  border-radius: 9px !important;
+  border: 1px solid #1e3a6bb8 !important;
+  border-left: 2px solid #39ffd18c !important;
+  font-family: var(--ff-mono);
+  box-shadow: inset 0 1px 0 #39ffd138;
+  transition: border-color 0.13s ease, background-color 0.13s ease;
+}
+body button[data-sidebar-right-guide-entry]:hover,
+body [data-sidebar-right-guide-entry] button:hover {
+  border-color: #39ffd18c !important;
+  background-color: #3a7bff24 !important;
+}
+
+/* ── 12i · 杂项漏网 + 几何收敛（第六轮顺出来，本轮做） ──────────────────────
+   三处杂项（实测）：
+     1. 变更卡的**头部行**底是壳的中性灰 rgb(33,33,35)，里面那颗 40x40 的图标瓦片是
+        壳的中性白 rgba(255,255,255,0.05) —— 两个都不是色板色。卡本身有钩子
+        [data-changed-files=true]（实测 884x229 / 圆角 16px / 底 panel@0.5 / 边 line@0.45）。
+     2. 用户轮是**两层**：外层行 [data-dsh-part='message-row'][data-chat-flow-kind='user']
+        给了 brand@0.1 的整行淡染（10px），内层气泡是 panel@0.54 + **20px 圆角 + 无边框** ——
+        全皮唯一的大圆角气泡，和「1px 细线 + 方角」的 HUD 语言对不上。
+     3. 「预览版」徽章（C3do_G_previewBadge）走壳的 SF Mono 栈、999px 药丸。
+        **但它里面是纯中文** —— SF Mono 没有汉字字形，实际回退，所以这条**看不见**，不动它。
+
+   几何收敛（实测全皮 13 种圆角 → 收到 5 档）：
+     6px  图标键 / 标签
+     8px  行 / chip / 代码
+     9px  卡 / 交付卡 / 导引卡
+     10px 大面板 / 菜单 / 输入卡
+     999px 药丸
+   原来冒出来的孤值：侧栏行 7px、用量小卡 12px、输入卡 14px、变更卡 16px、用户气泡 20px。 */
+
+/* 1 · 变更卡：撤掉头部的中性灰、把白瓦片换成品青玻璃，圆角 16 → 9 */
+body [data-changed-files] {
+  border-radius: 9px !important;
+  font-family: var(--ff-mono);
+}
+body [data-changed-files] > button {
+  background-color: transparent !important;
+  box-shadow: inset 0 -1px 0 #1e3a6b8c;
+}
+body [data-changed-files] > button > span:first-child {
+  background-color: #3a7bff24 !important;
+  border: 1px solid #1e3a6b99 !important;
+  border-radius: 8px !important;
+}
+
+/* 2 · 用户轮：左缘一道青竖条 + 圆角收到 9px。
+   **只挂在真有 data 钩子的那一层**（message-row + chat-flow-kind='user'）。
+   第一版我写的是直系链 [data-chat-flow-kind='user'] > div > div > div —— 错的：
+   实测 flowItem 与 userRow 之间还有一层被尺寸过滤器跳过的 wrapper，真实深度是 **4**，
+   于是那条链命中了**同层的兄弟**（透明的 userStack 外壳、以及时间戳那一行
+   isJrZG_actions），截图里「14:43」被框了一道青边，而真气泡 _8TxK7a_bubble 一动没动。
+   **直系链要数准层数，数不准就别用** —— 气泡本身没有 data 钩子，所以它那个 20px 圆角
+   这轮先留着（要改得先拿到钩子）。 */
+body [data-dsh-part='message-row'][data-chat-flow-kind='user'] {
+  border-radius: 9px !important;
+  box-shadow: inset 2px 0 0 #39ffd18c, inset 0 1px 0 #39ffd129;
+}
+
+/* 3 · 几何收敛：把冒出来的孤值拉回档位 */
+body [data-slot^='sidebar.workspaces'] [role='treeitem'] {
+  border-radius: 8px !important;
+}
+body [data-dsh-part='foot-card'] {
+  border-radius: 9px !important;
+}
+body [data-composer-card] {
+  border-radius: 10px !important;
+}
+/* 输入卡 dock 里那根读数条（data-composer-stats）原来是 12px，也是孤值。
+   **不能直接下 border-radius** —— 实测 CDP 里赢的那条声明是壳体自己的
+     html[data-dsh-skin] [data-phase='active'] [data-slot='conversation.input.dock'] > *
+       { border-radius: var(--dsh-composer-accessory-radius, 12px) !important }
+   比我写的 (0,2,2) 更高（它是 (0,3,1)），我那条 10px 会静默输掉。
+   而壳在 fallback 里**留了变量**，所以正解是设变量而不是比优先级。
+   实测在 body 上设成 10px：只有读数条从 12px 变 10px，药丸 / 加号 / 权限 pill 全都不动。 */
+body {
+  --dsh-composer-accessory-radius: 10px;
+}
+
+/* ── 12j · 输入卡 dock 的二级浮层（点读数药丸弹出的那张读数表） ─────────────
+   dock 里有三个 aria-haspopup='dialog' 的药丸：两张读数（轮/步·tok/s、tok·缓存命中）
+   与一枚上下文环。点开是一张 dl 读数表（模型用时 / 工具调用用时 / TTFT / TPS …）。
+
+   实测：底 rgb(10,16,32)（皮肤的 panel，但**不透明**）、圆角 **16px**、
+   **没有边线**（只有一圈 0.5px 的 line@0.3 阴影）、字体是比例字体。
+   也就是「颜色对了、语言没到」：缺 1px 冷蓝边、缺等宽读数、圆角是孤值 16px。
+
+   钩子：前两张表分别带 [data-session-stats-details] / [data-session-stats-usage]；
+   **上下文环那张（cvcuKa_panel）没有任何 data 钩子**，只能靠「面板里直接挂着 dl」
+   这个共同形状，所以三条都写成 :has()。带 :not([data-shortcut-modal]) 是为了
+   不误伤设置弹窗（它也是 role=dialog）。 */
+
+body [role='dialog']:not([data-shortcut-modal]):has(> dl),
+body [role='dialog']:not([data-shortcut-modal]):has([data-session-stats-details]),
+body [role='dialog']:not([data-shortcut-modal]):has([data-session-stats-usage]) {
+  border-radius: 10px !important;
+  border: 1px solid #3a7bff73 !important;
+  background-color: #0a1020f0 !important;
+  box-shadow: 0 14px 44px #05070db8, inset 0 1px 0 #39ffd159 !important;
+  font-family: var(--ff-mono);
+}
+/* 读数表本体：标签走次级、读数走亮银，全部等宽（原来标签与读数都挤在同一支板岩蓝上） */
+body [role='dialog']:not([data-shortcut-modal]):has(> dl) dl,
+body [role='dialog']:not([data-shortcut-modal]):has(> dl) dt,
+body [role='dialog']:not([data-shortcut-modal]):has(> dl) dd {
+  font-family: var(--ff-mono);
+}
+body [role='dialog']:not([data-shortcut-modal]):has(> dl) dt {
+  color: #8FA8CC !important;
+}
+body [role='dialog']:not([data-shortcut-modal]):has(> dl) dd {
+  color: #e8f1ffeb !important;
+}
+
+/* ── 12k · 右栏文件浏览器里的文件类型徽章（全皮唯一一处彩色图标） ──────────
+   实测：这些徽章是**写死颜色的内联 SVG**，不吃 currentColor，所以下 color 无效 ——
+       .py 那支 = <rect fill="#F2F4F7" stroke="#D5DBE5"> 作底
+                 + <path fill="#3776AB">（Python 蓝）/ <path fill="#FFD43B">（黄）
+   在整幅冷蓝 HUD 里，这一排黄蓝徽章是最跳的东西。
+   做法：**写死颜色那一块当徽章底（→ 夜色板），它后面的图案（→ 品牌电蓝）**。
+   选择器靠 [fill] 属性精确区分：单色线稿图标的第一块都是 fill="currentColor"，
+   被 :not([fill='currentColor']) 排除，一律不碰。行的钩子是 li[data-files-entry][data-files-path]。 */
+body [data-files-entry] svg > :first-child[fill]:not([fill='currentColor']):not([fill='none']) {
+  fill: #0a1020eb !important;
+  stroke: #1e3a6bd9 !important;
+}
+body [data-files-entry] svg > :first-child[fill]:not([fill='currentColor']):not([fill='none']) ~ *,
+body [data-files-entry] svg > :first-child[fill]:not([fill='currentColor']):not([fill='none']) ~ * * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* ── 12l · 文件徽章里剩下的白与灰：改 token，不比优先级 ──────────────────────
+   12k 那条收拾掉了写死十六进制的部分（Python 的黄与蓝）。剩下两支非色板色实测是
+   壳的**静态中性色 token**，不是写死的：
+     .md / .png 的折角  <path fill="var(--dsw-static-neutral-00)" fill-opacity=".7">
+                 图案  <g color="var(--dsw-static-neutral-00)"> 里 fill="currentColor" → 白
+     通用文件        <path fill="var(--dsw-static-neutral-400)">  → 中性灰 rgb(162,164,166)
+   这跟坑 24 是同一回事：**规则比不过 / 够不着的时候，先找有没有变量可以设。**
+   只改在 [data-files-entry] 这一层，别处用到这两支静态色的地方不受影响。 */
+body [data-files-entry] {
+  --dsw-static-neutral-00: #e8f1fff5;
+  --dsw-static-neutral-400: #8FA8CC;
+}
+
+/* ── 13 · 侧栏左上角品牌行：单行「鲸鱼娘 · 未至之境」+ 一枚青色状态灯 ────────
+   真壳结构（probe-brand.mjs 的 nameSlotHtml 原样）：
+     button.brand[aria-label=新建会话]      216x24 @(16,24)   overflow:hidden
+       span.brandText
+         div[data-slot=sidebar.brand.name][display:contents]
+           span.localBuildBrand                  ← **中间这一层是存在的**
+             span.localBuildTitle  "DSH 本地构建"   12px / lh13
+             span.buildVersion     "0.1.7-…"        6px  / lh10
+   用户要求：名字改成「鲸鱼娘 · 未至之境」、**去掉版本号**、重新排版。
+   三条硬约束（老交接量的，照旧成立）：
+   1. 整块只有 24px 高而且 overflow:hidden —— 行高一涨就会被切掉，字号只能排在这个行盒里。
+   2. 替换文字**不能动原来的行盒度量**：原文留位（visibility: hidden），
+      新字用绝对定位的 ::after 盖上去；照老配方写 font-size:0 会让基线变化、整块上移。
+   3. 插槽里那层 wrapper 会让「直系」那套选择器命中它 —— 必须加 :not(:only-child) 判别器。
+   这一版的排版动作：wrapper 从「两行竖排」改成「一行横排 + 垂直居中」，
+   名字换成 13.5px 单行 + 拉开字距；版本号那一格**留着重用** —— 字号归零、做成一颗
+   5x5 的青色状态灯（不写 display:none：那会一起动到行盒）。 */
+
+body [data-slot='sidebar.brand.name'] > * {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 7px;
+  height: 100%;
+}
+body [data-slot='sidebar.brand.name'] > span:first-child:not(:only-child),
+body [data-slot='sidebar.brand.name'] > * > span:first-child {
+  position: relative;
+  visibility: hidden;
+}
+body [data-slot='sidebar.brand.name'] > span:first-child:not(:only-child)::after,
+body [data-slot='sidebar.brand.name'] > * > span:first-child::after {
+  content: '鲸鱼娘 · 未至之境';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  visibility: visible;
+  font-family: var(--whale-fantasy-font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: #e8f1fffa;
+  -webkit-text-fill-color: #e8f1fffa;
+  text-shadow: 0 0 12px #3a7bff8c;
+  /* 名字左侧一根 2px 的青色竖棒：整行唯一的 HUD 记号，替代被去掉的版本号药丸。 */
+  padding-left: 9px;
+  background-image: linear-gradient(90deg, #39ffd1d9 0 2px, transparent 2px);
+  background-repeat: no-repeat;
+  background-size: 2px 12px;
+  background-position: 0 50%;
+}
+/* 版本号那一格：**整格收成 0**（用户要求去掉版本号）。收成 0 而不是 display:none ——
+   这一格还在 flex 行里，display:none 会让「超长的替换名字」和它错位重叠
+   （实测：名字在 x48..160，方点落在 x130，正好叠在「至」字上）。
+   HUD 的那点青色改挂在名字自己身上（见上一条 ::after 的左侧竖棒）。 */
+body [data-slot='sidebar.brand.name'] > span:last-child:not(:only-child),
+body [data-slot='sidebar.brand.name'] > * > span:last-child {
+  visibility: visible;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  width: 0;
+  min-width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: none;
+  box-shadow: none;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+

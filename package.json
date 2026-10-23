@@ -1,0 +1,37 @@
+{
+  "name": "dsh-skin-whale-fantasy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "鲸鱼娘 · 未至之境 — 视频背景的深色 DSH Web 皮肤（本地安装版）",
+  "type": "module",
+  "main": "lib/index.js",
+  "license": "CC-BY-NC-SA-4.0",
+  "files": [
+    "lib",
+    "assets",
+    "preview",
+    "skin.json",
+    "skin.css",
+    "patches.css",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  }
+}
